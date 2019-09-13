@@ -1,8 +1,10 @@
-struct gamestate {
-    int (*init)(struct gamestate *state);
-    int (*update)(struct gamestate *state);
-    int (*draw)(struct gamestate *state);
-    int (*destroy)(struct gamestate *state);
-    struct gamestate* next;
+#define STATE_DONE 2
+
+struct state_s {
+    int (*init)(struct state_s *state);
+    int (*update)(struct state_s *state);
+    int (*draw)(struct state_s *state);
+    int (*destroy)(struct state_s *state);
+    struct state_s* next;
     int status;
 };

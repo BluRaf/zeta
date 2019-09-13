@@ -1,7 +1,7 @@
 #include "utils.h"
 #include "ralph.h"
 #include "gamestate.h"
-#include "gamestate_intro.h"
+#include "state_slideshow.h"
 
 
 #define GAME_WIDTH 240
@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
 {
     int done = 0;
 
-    struct gamestate *state = &gamestate_intro;
+    struct state_s *state = &state_slideshow;
 
     ralph_init("Zeta", "BluRaf");
 
@@ -32,34 +32,46 @@ int main(int argc, char *argv[])
     frame_timer = ralph_event_add_timer(event_queue, 1.0/FPS);
     al_start_timer(frame_timer);
 
-    state->init(state);
     while (!done) {
-        done = state->update(state);
-        if ((state->next != state) && (state->next != NULL)) {/* switch to next state */};
+        log_debug("Initializing state 0x%x", state);
+        state->init(state);
+        while (state->status != STATE_DONE) {
+            al_wait_for_event(event_queue, &event);
+            switch (event.type) {
+            case ALLEGRO_EVENT_DISPLAY_CLOSE:
+                done = 1;
+                break;
+            case ALLEGRO_EVENT_TIMER:
+                al_set_target_bitmap(target.buffer);
+                al_clear_to_color(al_map_rgb(0, 0, 0));
 
-        al_wait_for_event(event_queue, &event);
-        switch (event.type) {
-        case ALLEGRO_EVENT_DISPLAY_CLOSE:
+                state->draw(state);
+
+                al_set_target_backbuffer(target.display);
+                /*al_clear_to_color(al_map_rgb(0, 0, 0));*/
+                al_draw_scaled_bitmap(target.buffer, 0, 0, GAME_WIDTH, GAME_HEIGHT,
+                                      target.draw_rect.x, target.draw_rect.y,
+                                      target.draw_rect.w, target.draw_rect.h,
+                                      0);
+                al_flip_display();
+                break;
+            default:
+                break;
+            }
+            state->update(state);
+        }
+        log_debug("Destroying state 0x%x", state);
+        state->destroy(state);
+
+        if (   (state->next != state)
+            && (state->next != NULL)) {
+            log_debug("Next state: 0x%x", state->next);
+            state = state->next;
+        }
+        else {
             done = 1;
-            break;
-        case ALLEGRO_EVENT_TIMER:
-            al_set_target_bitmap(target.buffer);
-            al_clear_to_color(al_map_rgb(0, 0, 0));
-
-            state->draw(state);
-
-            al_set_target_backbuffer(target.display);
-            /*al_clear_to_color(al_map_rgb(0, 0, 0));*/
-            al_draw_scaled_bitmap(target.buffer, 0, 0, GAME_WIDTH, GAME_HEIGHT, 
-                                  target.draw_rect.x, target.draw_rect.y, target.draw_rect.w, target.draw_rect.h,
-                                  0);
-            al_flip_display();
-            break;
-        default:
-            break;
         }
     }
-    state->destroy(state);
 
     al_destroy_timer(frame_timer);
     ralph_destroy_render(target);
