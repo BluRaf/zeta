@@ -16,17 +16,6 @@ ALLEGRO_EVENT event;
 ALLEGRO_TIMER *frame_timer = NULL;
 
 
-/* TODO: Proper gamestate management */
-struct gamestate gamestate_intro = {
-    .next = NULL,
-    .calls = {
-        .update = gamestate_intro_update,
-        .draw = gamestate_intro_draw
-    },
-    .done = 0
-};
-
-
 int main(int argc, char *argv[])
 {
     int done = 0;
@@ -43,8 +32,9 @@ int main(int argc, char *argv[])
     frame_timer = ralph_event_add_timer(event_queue, 1.0/FPS);
     al_start_timer(frame_timer);
 
+    state->init(state);
     while (!done) {
-        done = state->calls.update(state);
+        done = state->update(state);
         if ((state->next != state) && (state->next != NULL)) {/* switch to next state */};
 
         al_wait_for_event(event_queue, &event);
@@ -56,7 +46,7 @@ int main(int argc, char *argv[])
             al_set_target_bitmap(target.buffer);
             al_clear_to_color(al_map_rgb(0, 0, 0));
 
-            state->calls.draw(state);
+            state->draw(state);
 
             al_set_target_backbuffer(target.display);
             /*al_clear_to_color(al_map_rgb(0, 0, 0));*/
@@ -69,6 +59,7 @@ int main(int argc, char *argv[])
             break;
         }
     }
+    state->destroy(state);
 
     al_destroy_timer(frame_timer);
     ralph_destroy_render(target);

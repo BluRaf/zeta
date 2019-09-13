@@ -1,10 +1,8 @@
-struct gamestate_calls {
-    int (*update)(struct gamestate *state);
-    void (*draw)(struct gamestate *state);
-};
-
 struct gamestate {
+    int (*init)(struct gamestate *state);
+    int (*update)(struct gamestate *state);
+    int (*draw)(struct gamestate *state);
+    int (*destroy)(struct gamestate *state);
     struct gamestate* next;
-    struct gamestate_calls calls;
-    int done;
+    int status;
 };

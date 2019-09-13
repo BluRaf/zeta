@@ -12,7 +12,7 @@ $(bin): $(obj)
 
 .PHONY: clean
 clean:
-	rm -f $(obj)
+	rm -f $(obj) $(bin)
 
 # this is the new rule for recursively building libfoo
 #.PHONY: libfoo
